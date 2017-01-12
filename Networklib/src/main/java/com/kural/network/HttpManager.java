@@ -3,6 +3,7 @@ package com.kural.network;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -113,26 +114,42 @@ public class HttpManager {
     }
 
 
+    public void downloadFile(String url, String desUrl){
+
+        Request request = buildGetRequest(url, null);
+        mHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+                long  fileLength = response.body().contentLength();
+
+                InputStream inputStream = response.body().byteStream();
+
+            }
+        });
+    }
+
 
     private Request buildGetRequest(String url, Headers headers){
-
         if (TextUtils.isEmpty(url)) {
             throw new RuntimeException("url is empty");
         }
-
         Request.Builder requestBuilder = new Request.Builder();
         if (headers != null) {
             requestBuilder.url(url).headers(headers).build();
         } else {
             requestBuilder.url(url).build();
         }
-
         return requestBuilder.build();
     }
 
 
     private Request buildPostRequest(String url, HashMap<String, String> params, Headers headers) {
-
         if (TextUtils.isEmpty(url)) {
             throw new RuntimeException("url is empty");
         }
@@ -151,7 +168,6 @@ public class HttpManager {
         if (builder != null) {
             requestBody = builder.build();
         }
-
         Request.Builder requestBuilder = new Request.Builder();
         requestBuilder.url(url);
         if (requestBody != null) {
