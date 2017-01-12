@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
@@ -40,23 +41,12 @@ public class HttpManager {
         mHttpClient = new OkHttpClient();
     }
 
-
-    private String aysnGetHttpRequest(String url) {
-        return asynGetHttpRequest(url, null);
+    public String getHttpRequest(String url){
+        return getHttpRequest(url, null);
     }
 
-    private String asynGetHttpRequest(String url, Headers headers) {
-        if (TextUtils.isEmpty(url)) {
-            throw new RuntimeException("url is empty");
-        }
-
-        Request.Builder requestBuilder = new Request.Builder();
-        if (headers != null) {
-            requestBuilder.url(url).headers(headers).build();
-        } else {
-            requestBuilder.url(url).build();
-        }
-        Request request = requestBuilder.build();
+    public String getHttpRequest(String url, Headers headers){
+        Request request = buildGetRequest(url, headers);
         Call call = mHttpClient.newCall(request);
         Response response = null;
         try {
@@ -72,11 +62,11 @@ public class HttpManager {
     }
 
 
-    private String aysnPostHttpRequest(String url, HashMap<String, String> params) {
-        return asynPostHttpRequest(url, params, null);
+    public String postHttpRequest(String url, HashMap<String, String> params){
+        return postHttpRequest(url, params, null);
     }
 
-    private String asynPostHttpRequest(String url, HashMap<String, String> params, Headers headers) {
+    public String postHttpRequest(String url, HashMap<String, String> params, Headers headers){
         Request request = buildPostRequest(url, params, headers);
         if (request == null) {
             throw new RuntimeException("url is empty");
@@ -96,10 +86,55 @@ public class HttpManager {
         return null;
     }
 
+
+    private void aysnGetHttpRequest(String url, Callback callback) {
+        asynGetHttpRequest(url, null, callback);
+    }
+
+    private void asynGetHttpRequest(String url, Headers headers, Callback callback) {
+        Request request = buildGetRequest(url, headers);
+        if (callback == null) {
+            throw new RuntimeException("asyn request callback can't be null");
+        }
+        mHttpClient.newCall(request).enqueue(callback);
+    }
+
+
+    private void aysnPostHttpRequest(String url, HashMap<String, String> params, Callback callback) {
+        asynPostHttpRequest(url, params, null, callback);
+    }
+
+    private void asynPostHttpRequest(String url, HashMap<String, String> params, Headers headers, Callback callback) {
+        Request request = buildPostRequest(url, params, headers);
+        if (callback == null) {
+            throw new RuntimeException("asyn request callback can't be null");
+        }
+        mHttpClient.newCall(request).enqueue(callback);
+    }
+
+
+
+    private Request buildGetRequest(String url, Headers headers){
+
+        if (TextUtils.isEmpty(url)) {
+            throw new RuntimeException("url is empty");
+        }
+
+        Request.Builder requestBuilder = new Request.Builder();
+        if (headers != null) {
+            requestBuilder.url(url).headers(headers).build();
+        } else {
+            requestBuilder.url(url).build();
+        }
+
+        return requestBuilder.build();
+    }
+
+
     private Request buildPostRequest(String url, HashMap<String, String> params, Headers headers) {
 
         if (TextUtils.isEmpty(url)) {
-            return null;
+            throw new RuntimeException("url is empty");
         }
 
         FormBody.Builder builder = null;
@@ -129,6 +164,5 @@ public class HttpManager {
 
         return requestBuilder.build();
     }
-
 
 }
