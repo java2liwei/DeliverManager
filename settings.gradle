@@ -1,0 +1,1 @@
+include ':app', ':Networklib', ':mylibrary', ':mylibrary2'
