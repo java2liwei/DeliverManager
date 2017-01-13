@@ -5,6 +5,9 @@ package com.kural.network.download.constant;
  */
 public class DownloadConstant {
 
+
+    public static final String DOWNLOAD_TABLE_NAME = "okhttp_download";
+
     /*****************************下载状态**************************************/
 
     public static final int STATE_NOT = 0;

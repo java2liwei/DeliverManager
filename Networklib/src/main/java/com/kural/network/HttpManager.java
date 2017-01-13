@@ -2,6 +2,11 @@ package com.kural.network;
 
 import android.text.TextUtils;
 
+import com.kural.network.download.bean.DownloadInfo;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -42,11 +47,11 @@ public class HttpManager {
         mHttpClient = new OkHttpClient();
     }
 
-    public String getHttpRequest(String url){
+    public String getHttpRequest(String url) {
         return getHttpRequest(url, null);
     }
 
-    public String getHttpRequest(String url, Headers headers){
+    public String getHttpRequest(String url, Headers headers) {
         Request request = buildGetRequest(url, headers);
         Call call = mHttpClient.newCall(request);
         Response response = null;
@@ -63,11 +68,11 @@ public class HttpManager {
     }
 
 
-    public String postHttpRequest(String url, HashMap<String, String> params){
+    public String postHttpRequest(String url, HashMap<String, String> params) {
         return postHttpRequest(url, params, null);
     }
 
-    public String postHttpRequest(String url, HashMap<String, String> params, Headers headers){
+    public String postHttpRequest(String url, HashMap<String, String> params, Headers headers) {
         Request request = buildPostRequest(url, params, headers);
         if (request == null) {
             throw new RuntimeException("url is empty");
@@ -114,28 +119,72 @@ public class HttpManager {
     }
 
 
-    public void downloadFile(String url, String desUrl){
+    public void downloadFile(final DownloadInfo downloadInfo) {
 
-        Request request = buildGetRequest(url, null);
+        if (downloadInfo == null) {
+            return;
+        }
+
+        Headers headers = buildDownloadHeaders(downloadInfo);
+        Request request = buildGetRequest(downloadInfo.getDownloadUrl(), headers);
         mHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                onDownloadFail(call, e, downloadInfo);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-
-                long  fileLength = response.body().contentLength();
-
-                InputStream inputStream = response.body().byteStream();
-
+                onDownloadSuccess(call, response, downloadInfo);
             }
         });
     }
 
 
-    private Request buildGetRequest(String url, Headers headers){
+    private void onDownloadSuccess(Call call, Response response, DownloadInfo downloadInfo) {
+
+        if (call == null || response == null || downloadInfo == null) {
+            return;
+        }
+
+        long totalLength = response.body().contentLength();
+        InputStream ins = response.body().byteStream();
+        FileOutputStream ous = null;
+        int len = -1;
+        byte[] data = new byte[1024 * 4];
+        try {
+            ous = new FileOutputStream(new File(downloadInfo.getTargetUrl()));
+            while ((len = ins.read(data)) != -1) {
+                ous.write(data, 0, len);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (ins != null) {
+                    ins.close();
+                }
+                if (ous != null) {
+                    ous.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void onDownloadFail(Call call, Exception e, DownloadInfo downloadInfo) {
+
+        if (call == null || downloadInfo == null) {
+            return;
+        }
+
+
+    }
+
+    private Request buildGetRequest(String url, Headers headers) {
         if (TextUtils.isEmpty(url)) {
             throw new RuntimeException("url is empty");
         }
@@ -179,6 +228,22 @@ public class HttpManager {
         }
 
         return requestBuilder.build();
+    }
+
+
+    private Headers buildDownloadHeaders(DownloadInfo downloadInfo) {
+
+        if (downloadInfo == null) {
+            return null;
+        }
+
+        long currentLength = downloadInfo.getCurrentLength();
+        Headers.Builder builder = new Headers.Builder();
+        if (currentLength > 0) {
+            builder.add(com.kural.network.http.Header.RANGE, "bytes=" + currentLength + "-");
+        }
+
+        return builder.build();
     }
 
 }
