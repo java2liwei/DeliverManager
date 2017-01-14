@@ -1,66 +1,58 @@
 package com.kural.network.download.db;
 
 import android.content.ContentValues;
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
+import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
 
-/**
- * 下载 数据库操作中心
- */
+import java.util.ArrayList;
+
 public class DownloadDbOpManager {
 
-    private static volatile DownloadDbOpManager mInstance;
-    private DownloadDbHelper mDownloadDbHelper;
-
-    public static DownloadDbOpManager getInstance() {
-        if (mInstance == null) {
-            synchronized (DownloadDbOpManager.class) {
-                if (mInstance == null) {
-                    mInstance = new DownloadDbOpManager();
-                }
-            }
+    public static DownloadInfo queryById (int id) {
+        if (id < 0) {
+            return null;
         }
-
-        return mInstance;
+        return DownloadDbBaseOp.getInstance().query("id = ?",  new String [] {String.valueOf(id)});
     }
 
-
-    private DownloadDbOpManager() {
-        //TODO init context
-        Context context = null;
-        mDownloadDbHelper = new DownloadDbHelper(context);
+    public static int queryDownloadStateById (int id) {
+        return DownloadDbBaseOp.getInstance().queryDownloadState("id = ?", new String [] { String.valueOf(id)});
     }
 
-
-    private void insert(ContentValues contentValues) {
-
-        if (mDownloadDbHelper == null) {
-            return;
-        }
-
-        if (contentValues == null) {
-            return;
-        }
-
-        SQLiteDatabase sqLiteDatabase = mDownloadDbHelper.getWritableDatabase();
-        sqLiteDatabase.insert(DownloadConstant.DOWNLOAD_TABLE_NAME, null, contentValues);
+    public static ArrayList<DownloadInfo> queryAllPenddingDownloadInfo () {
+        return DownloadDbBaseOp.getInstance().queryDownloadInfos("downloadState = ?", new String [] {String.valueOf(DownloadConstant.STATE_PENDDING)});
     }
 
-    private void updata(ContentValues contentValues, String whereClause, String[] whereArgs) {
+    public static void updataDownloadInfoState(int id, int downloadState) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DownloadInfo.Column_DownloadState, downloadState);
+        DownloadDbBaseOp.getInstance().updata(contentValues, "id = ?", new String [] {String.valueOf(id)});
+    }
 
-        if (mDownloadDbHelper == null) {
+    public static void updateDownloadInfo(DownloadInfo downloadInfo) {
+
+        if (downloadInfo == null) {
             return;
         }
 
-        if (contentValues == null) {
-            return;
-        }
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DownloadInfo.Column_CurrentLength, downloadInfo.getCurrentLength());
+        contentValues.put(DownloadInfo.Column_DownloadState, downloadInfo.getDownloadState());
+        contentValues.put(DownloadInfo.Column_DownloadNetState, downloadInfo.getDownloadNetSate());
+        contentValues.put(DownloadInfo.Column_TotalLength, downloadInfo.getTotalLength());
+        contentValues.put(DownloadInfo.Column_TargetUrl, downloadInfo.getTargetUrl());
 
-        SQLiteDatabase sqLiteDatabase = mDownloadDbHelper.getWritableDatabase();
-        sqLiteDatabase.update(DownloadConstant.DOWNLOAD_TABLE_NAME, contentValues, whereClause, whereArgs);
+        DownloadDbBaseOp.getInstance().updata(contentValues, "id = ?", new String [] {String.valueOf(downloadInfo.getId())});
+    }
 
+    public static void updateDownloadProgress(int id, long totalLength, long currentLength){
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DownloadInfo.Column_CurrentLength, currentLength);
+        contentValues.put(DownloadInfo.Column_TotalLength, totalLength);
+
+        DownloadDbBaseOp.getInstance().updata(contentValues, "id = ?", new String [] {String.valueOf(id)});
     }
 
 

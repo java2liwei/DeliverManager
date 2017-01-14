@@ -2,6 +2,9 @@ package com.kural.network.download.bean;
 
 import android.text.TextUtils;
 
+import com.kural.network.NetworkLibEnv;
+import com.kural.network.download.constant.DownloadConstant;
+
 /**
  * Download info
  */
@@ -14,14 +17,13 @@ public class DownloadInfo {
 
     public static final String Column_TotalLength = "totalLength";
 
+    public static final String Column_CurrentLength = "currentLength";
+
     public static final String Column_DownloadNetState = "downloadNetState";
 
     public static final String Column_DownloadState = "downloadState";
 
     public static final String Column_TargetUrl = "tagetUrl";
-
-
-
 
 
     private int mId;
@@ -39,6 +41,10 @@ public class DownloadInfo {
     private String mFileName;
 
     private String mTargetUrl;
+
+    public DownloadInfo() {
+
+    }
 
     public DownloadInfo(String downloadUrl) {
         mDownloadUrl = downloadUrl;
@@ -107,7 +113,7 @@ public class DownloadInfo {
             return null;
         }
 
-        mFileName = mDownloadUrl.substring(index);
+        mFileName = mDownloadUrl.substring(index + 1);
         return mFileName;
     }
 
@@ -116,6 +122,9 @@ public class DownloadInfo {
     }
 
     public String getTargetUrl() {
+        if (TextUtils.isEmpty(mTargetUrl)) {
+            mTargetUrl = DownloadConstant.getDownloadUrl(NetworkLibEnv.getInstance().getContext(), getFileName());
+        }
         return mTargetUrl;
     }
 

@@ -3,9 +3,10 @@ package com.kural.network;
 import android.text.TextUtils;
 
 import com.kural.network.download.bean.DownloadInfo;
+import com.kural.network.download.constant.DownloadConstant;
+import com.kural.network.download.db.DownloadDbOpManager;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,19 +148,30 @@ public class HttpManager {
             return;
         }
 
-        long totalLength = response.body().contentLength();
+        if (downloadInfo.getDownloadState() == DownloadConstant.STATE_PENDDING) {
+            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_DOWNLOADING);
+        }
+
         InputStream ins = response.body().byteStream();
         FileOutputStream ous = null;
+        long totalLength = response.body().contentLength();
+        long currentLength = downloadInfo.getCurrentLength();
+        int downloadState = DownloadConstant.STATE_DOWNLOADING;
         int len = -1;
         byte[] data = new byte[1024 * 4];
         try {
+
             ous = new FileOutputStream(new File(downloadInfo.getTargetUrl()));
-            while ((len = ins.read(data)) != -1) {
+
+            while ((len = ins.read(data)) != -1 && downloadState == DownloadConstant.STATE_DOWNLOADING) {
                 ous.write(data, 0, len);
+                currentLength = currentLength + len;
+                DownloadDbOpManager.updateDownloadProgress(downloadInfo.getId(), totalLength, currentLength);
+                downloadState = DownloadDbOpManager.queryDownloadStateById(downloadInfo.getId());
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+
+            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_SUCCESS);
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
