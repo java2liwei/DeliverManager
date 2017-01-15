@@ -1,6 +1,7 @@
 package com.kural.network.download.db;
 
 import android.content.ContentValues;
+import android.text.TextUtils;
 
 import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
@@ -14,6 +15,15 @@ public class DownloadDbOpManager {
             return null;
         }
         return DownloadDbBaseOp.getInstance().query("id = ?",  new String [] {String.valueOf(id)});
+    }
+
+    public static DownloadInfo queryByDownloadUrl(String url) {
+
+        if (TextUtils.isEmpty(url)) {
+            return null;
+        }
+
+        return DownloadDbBaseOp.getInstance().query("downloadUrl = ?",  new String [] {String.valueOf(url)});
     }
 
     public static int queryDownloadStateById (int id) {

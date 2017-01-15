@@ -14,12 +14,12 @@ import java.util.List;
 /**
  * 下载服务， 目的是退出主界面， 下载服务正常运行
  */
-public class DownloadService extends Service{
+public class DownloadService extends Service {
 
 
     private DownloadThread mDownloadThread;
 
-    private volatile boolean mIsNeedCheck  = false;
+    private volatile boolean mIsNeedCheck = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -41,12 +41,12 @@ public class DownloadService extends Service{
 
     }
 
-    private void  startDownload() {
+    private void startDownload() {
 
         if (isNeedCheck()) {
             return;
         } else {
-            setIsNeedCheck(true);
+            changeCheckSatate(true);
         }
 
         if (mDownloadThread == null || !mDownloadThread.isAlive()) {
@@ -59,16 +59,18 @@ public class DownloadService extends Service{
         return mIsNeedCheck;
     }
 
-    public synchronized void setIsNeedCheck(boolean mIsNeedCheck) {
+    public synchronized void changeCheckSatate(boolean mIsNeedCheck) {
         this.mIsNeedCheck = mIsNeedCheck;
     }
 
-    class DownloadThread extends Thread{
+    class DownloadThread extends Thread {
 
         @Override
         public void run() {
             while (isNeedCheck()) {
-                setIsNeedCheck(false);
+
+                changeCheckSatate(false);
+
                 List<DownloadInfo> downloadInfos = DownloadDbOpManager.queryAllPenddingDownloadInfo();
                 for (DownloadInfo downloadInfo : downloadInfos) {
                     int state = DownloadDbOpManager.queryDownloadStateById(downloadInfo.getId());

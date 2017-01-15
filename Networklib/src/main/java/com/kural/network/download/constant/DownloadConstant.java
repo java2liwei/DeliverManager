@@ -13,6 +13,10 @@ public class DownloadConstant {
 
     public static final String DOWNLOAD_TABLE_NAME = "okhttp_download";
 
+    public static final String DOWNLOAD_PROVIDER_AUTHORITY = "com.kural.provider.okhttp_download";
+
+    public static final String DOWNLOAD_PROVIDER_URI = "content://" + DOWNLOAD_PROVIDER_AUTHORITY + "/" + DOWNLOAD_TABLE_NAME;
+
     /*****************************下载状态**************************************/
 
 
@@ -22,17 +26,13 @@ public class DownloadConstant {
 
     public static final int STATE_PASUE = 3;
 
-    public static final int STATE_FINISH = 6;
+    public static final int STATE_SUCCESS = 4;
 
-    public static final int STATE_SUCCESS = 7;
-
-    public static final int STATE_FAIL = 8;
+    public static final int STATE_FAIL = 5;
 
 
 
     /*****************************开始下载网络状态**************************************/
-
-    public static final int NETWORK_STATE_NO_WIFI = -1;
 
     public static final int NetWORK_STATE_MOBILE = 1;
 

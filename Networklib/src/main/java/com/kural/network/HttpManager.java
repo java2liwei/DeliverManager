@@ -193,6 +193,7 @@ public class HttpManager {
             return;
         }
 
+        DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_FAIL);
 
     }
 

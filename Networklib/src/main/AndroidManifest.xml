@@ -10,6 +10,10 @@
 
         <service android:name="com.kural.network.download.service.DownloadService" />
 
+        <provider
+            android:authorities="com.kural.provider.okhttp_download"
+            android:name="com.kural.network.download.contentProvider.DownloadContentProvider"/>
+
     </application>
 
 </manifest>
