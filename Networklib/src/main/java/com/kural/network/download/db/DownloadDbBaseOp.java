@@ -45,10 +45,6 @@ public class DownloadDbBaseOp {
 
         Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         context.getContentResolver().insert(uri, contentValues);
-
-//        SQLiteDatabase sqLiteDatabase = mDownloadDbHelper.getWritableDatabase();
-//        sqLiteDatabase.insert(DownloadConstant.DOWNLOAD_TABLE_NAME, null, contentValues);
-//
         updateDownloadThread();
     }
 
@@ -65,11 +61,7 @@ public class DownloadDbBaseOp {
 
         Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         context.getContentResolver().update(uri, contentValues, whereClause, whereArgs);
-//        SQLiteDatabase sqLiteDatabase = mDownloadDbHelper.getWritableDatabase();
-//        sqLiteDatabase.update(DownloadConstant.DOWNLOAD_TABLE_NAME, contentValues, whereClause, whereArgs);
-//
         updateDownloadThread();
-
     }
 
     public synchronized void delet(String whereClause, String[] whereArgs) {
@@ -82,21 +74,17 @@ public class DownloadDbBaseOp {
         Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         context.getContentResolver().delete(uri, whereClause, whereArgs);
 
-//        SQLiteDatabase sqLiteDatabase = mDownloadDbHelper.getWritableDatabase();
-//        sqLiteDatabase.delete(DownloadConstant.DOWNLOAD_TABLE_NAME, whereClause, whereArgs);
-
         updateDownloadThread();
     }
 
 
-    public DownloadInfo query(String selection, String[] selectionArgs) {
+    public DownloadInfo query(Uri uri, String selection, String[] selectionArgs) {
 
         Context context = NetworkLibEnv.getInstance().getContext();
-        if (context == null) {
+        if (context == null || uri == null) {
             return null;
         }
 
-        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         Cursor cursor = context.getContentResolver().query(uri, null, selection, selectionArgs, null);
         DownloadInfo downloadInfo = new DownloadInfo();
         downloadInfo.setId(cursor.getInt(cursor.getColumnIndex(DownloadInfo.Column_Id)));

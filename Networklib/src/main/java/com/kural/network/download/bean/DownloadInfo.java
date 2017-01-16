@@ -1,5 +1,6 @@
 package com.kural.network.download.bean;
 
+import android.net.Uri;
 import android.text.TextUtils;
 
 import com.kural.network.NetworkLibEnv;
@@ -41,6 +42,8 @@ public class DownloadInfo {
     private String mFileName;
 
     private String mTargetUrl;
+
+    private Uri mDownloadUri;
 
     public DownloadInfo() {
 

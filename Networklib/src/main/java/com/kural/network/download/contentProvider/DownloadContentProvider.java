@@ -1,12 +1,14 @@
 package com.kural.network.download.contentProvider;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
+import com.kural.network.NetworkLibEnv;
 import com.kural.network.download.constant.DownloadConstant;
 import com.kural.network.download.db.DownloadDbHelper;
 
@@ -21,14 +23,16 @@ public class DownloadContentProvider extends ContentProvider {
     private static final UriMatcher uriMatcher;
 
     //操作单个
-    private static final int URI_VOLIDE = 1;
+    private static final int URI_DOWNLOAD = 1;
+    //操作多个
+    private static final int URI_DOWNLOADS = 2;
 
 
     static {
         //初始化uriMatch
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        //添加single uri
-        uriMatcher.addURI(DownloadConstant.DOWNLOAD_PROVIDER_AUTHORITY, DownloadConstant.DOWNLOAD_TABLE_NAME, URI_VOLIDE);
+        uriMatcher.addURI(DownloadConstant.DOWNLOAD_PROVIDER_AUTHORITY, DownloadConstant.DOWNLOAD_TABLE_NAME, URI_DOWNLOAD);
+        uriMatcher.addURI(DownloadConstant.DOWNLOAD_PROVIDER_AUTHORITY, DownloadConstant.DOWNLOAD_TABLE_NAME + "/#", URI_DOWNLOADS);
     }
 
 
@@ -56,18 +60,36 @@ public class DownloadContentProvider extends ContentProvider {
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
         long id = sqLiteDatabase.insert(DownloadConstant.DOWNLOAD_TABLE_NAME, null, contentValues);
         String path = uri.toString();
-        return Uri.parse(path.substring(0, path.lastIndexOf("/")) + id);
+        uri =  Uri.parse(path.substring(0, path.lastIndexOf("/")) + id);
+
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        if (contentResolver != null) {
+            contentResolver.notifyChange(uri, null);
+        }
+        return uri;
     }
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
-        return sqLiteDatabase.delete(DownloadConstant.DOWNLOAD_TABLE_NAME, selection, selectionArgs);
+        int id = sqLiteDatabase.delete(DownloadConstant.DOWNLOAD_TABLE_NAME, selection, selectionArgs);
+
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        if (contentResolver != null) {
+            contentResolver.notifyChange(uri, null);
+        }
+        return id;
     }
 
     @Override
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
-        return sqLiteDatabase.update(DownloadConstant.DOWNLOAD_TABLE_NAME, contentValues, selection, selectionArgs);
+        int id = sqLiteDatabase.update(DownloadConstant.DOWNLOAD_TABLE_NAME, contentValues, selection, selectionArgs);
+
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        if (contentResolver != null) {
+            contentResolver.notifyChange(uri, null);
+        }
+        return id;
     }
 }

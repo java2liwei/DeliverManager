@@ -11,6 +11,8 @@ import com.kural.network.download.bean.DownloadInfo;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private final String mUrl = "http://dl.cm.ksmobile.com/static/res/93/a9/web.zip";
+
     private Button mDownloadBtn;
 
     @Override
@@ -26,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_download:
-                startDownload("http://dl.cm.ksmobile.com/static/res/93/a9/web.zip");
+                startDownload(mUrl);
                 break;
         }
     }
@@ -34,5 +36,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void startDownload (String url) {
         DownloadInfo downloadInfo = new DownloadInfo(url);
         DownloadManager.getInstance().startDownload(downloadInfo, true);
+    }
+
+    private void pauseDownload() {
+
+    }
+
+    private void resumeDownload() {
+
     }
 }

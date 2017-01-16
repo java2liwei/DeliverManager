@@ -1,11 +1,12 @@
 package com.kural.network.download;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.net.Uri;
 
+import com.kural.network.NetworkLibEnv;
 import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
-import com.kural.network.download.db.DownloadDbBaseOp;
-import com.kural.network.download.db.DownloadDbOpManager;
 
 /**
  * 下载管理类
@@ -26,76 +27,61 @@ public class DownloadManager {
         return mInstance;
     }
 
-    public void startDownload(DownloadInfo downloadInfo, boolean isWifi) {
+    private DownloadManager () {
 
-        if (downloadInfo == null) {
-            return;
-        }
-
-
-        DownloadInfo queryInfo = DownloadDbOpManager.queryByDownloadUrl(downloadInfo.getDownloadUrl());
-        if (queryInfo != null) {
-            if (queryInfo.getDownloadState() != DownloadConstant.STATE_DOWNLOADING) {
-                resumeDownload(downloadInfo);
-            }
-        } else {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(DownloadInfo.Column_DownloadUrl, downloadInfo.getDownloadUrl());
-            contentValues.put(DownloadInfo.Column_TargetUrl, downloadInfo.getTargetUrl());
-            contentValues.put(DownloadInfo.Column_DownloadNetState,
-                    isWifi ? DownloadConstant.NETWORK_STATE_WIFI : DownloadConstant.NetWORK_STATE_MOBILE);
-            contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PENDDING);
-            DownloadDbBaseOp.getInstance().insert(contentValues);
-        }
     }
 
-    public void pauseDownload(DownloadInfo downloadInfo) {
+    public Uri startDownload(DownloadInfo downloadInfo, boolean isWifi) {
 
         if (downloadInfo == null) {
+            return null;
+        }
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DownloadInfo.Column_DownloadUrl, downloadInfo.getDownloadUrl());
+        contentValues.put(DownloadInfo.Column_TargetUrl, downloadInfo.getTargetUrl());
+        contentValues.put(DownloadInfo.Column_DownloadNetState,
+                isWifi ? DownloadConstant.NETWORK_STATE_WIFI : DownloadConstant.NetWORK_STATE_MOBILE);
+        contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PENDDING);
+
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
+        return contentResolver.insert(uri, contentValues);
+    }
+
+    public void pauseDownload(DownloadInfo downloadInfo, Uri uri) {
+
+        if (downloadInfo == null || uri == null) {
             return;
         }
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PASUE);
-        DownloadDbBaseOp.getInstance().updata(contentValues, "id = ?", new String[]{String.valueOf(downloadInfo.getId())});
 
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        contentResolver.update(uri, contentValues, null, null);
     }
 
-    public void resumeDownload(DownloadInfo downloadInfo) {
+    public void resumeDownload(DownloadInfo downloadInfo, Uri uri) {
 
-        if (downloadInfo == null) {
+        if (downloadInfo == null || uri == null) {
             return;
         }
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PENDDING);
-        DownloadDbBaseOp.getInstance().updata(contentValues, "id = ?", new String[]{String.valueOf(downloadInfo.getId())});
-
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        contentResolver.update(uri, contentValues, null, null);
     }
 
-    public void stopDownload(DownloadInfo downloadInfo) {
+    public void stopDownload(DownloadInfo downloadInfo, Uri uri) {
 
         if (downloadInfo == null) {
             return;
         }
-        DownloadDbBaseOp.getInstance().delet("id = ?", new String[]{String.valueOf(downloadInfo.getId())});
 
-
-    }
-
-    private boolean isDwonloadTaskExits(DownloadInfo downloadInfo){
-
-        if (downloadInfo == null) {
-            return false;
-        }
-
-        downloadInfo = DownloadDbOpManager.queryByDownloadUrl(downloadInfo.getDownloadUrl());
-
-        if (downloadInfo != null) {
-            return true;
-        }
-
-        return false;
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        contentResolver.delete(uri, null, null);
     }
 
 }
