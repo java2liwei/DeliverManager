@@ -2,14 +2,12 @@ package com.kural.network.download.db;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 
 import com.kural.network.NetworkLibEnv;
 import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
-import com.kural.network.download.service.DownloadService;
 
 import java.util.ArrayList;
 
@@ -32,22 +30,6 @@ public class DownloadDbBaseOp {
     }
 
 
-    public synchronized void insert(ContentValues contentValues) {
-
-        Context context = NetworkLibEnv.getInstance().getContext();
-        if (context == null) {
-            return;
-        }
-
-        if (contentValues == null) {
-            return;
-        }
-
-        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
-        context.getContentResolver().insert(uri, contentValues);
-        updateDownloadThread();
-    }
-
     public synchronized void updata(ContentValues contentValues, String whereClause, String[] whereArgs) {
 
         Context context = NetworkLibEnv.getInstance().getContext();
@@ -61,22 +43,7 @@ public class DownloadDbBaseOp {
 
         Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         context.getContentResolver().update(uri, contentValues, whereClause, whereArgs);
-        updateDownloadThread();
     }
-
-    public synchronized void delet(String whereClause, String[] whereArgs) {
-
-        Context context = NetworkLibEnv.getInstance().getContext();
-        if (context == null) {
-            return;
-        }
-
-        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
-        context.getContentResolver().delete(uri, whereClause, whereArgs);
-
-        updateDownloadThread();
-    }
-
 
     public DownloadInfo query(Uri uri, String selection, String[] selectionArgs) {
 
@@ -86,6 +53,38 @@ public class DownloadDbBaseOp {
         }
 
         Cursor cursor = context.getContentResolver().query(uri, null, selection, selectionArgs, null);
+        if (cursor == null) {
+            return null;
+        }
+
+        cursor.moveToFirst();
+        DownloadInfo downloadInfo = new DownloadInfo();
+        downloadInfo.setId(cursor.getInt(cursor.getColumnIndex(DownloadInfo.Column_Id)));
+        downloadInfo.setCurrentLength(cursor.getLong(cursor.getColumnIndex(DownloadInfo.Column_CurrentLength)));
+        downloadInfo.setDownloadNetSate(cursor.getInt(cursor.getColumnIndex(DownloadInfo.Column_DownloadNetState)));
+        downloadInfo.setDownloadState(cursor.getInt(cursor.getColumnIndex(DownloadInfo.Column_DownloadState)));
+        downloadInfo.setDownloadUrl(cursor.getString(cursor.getColumnIndex(DownloadInfo.Column_DownloadUrl)));
+        downloadInfo.setTargetUrl(cursor.getString(cursor.getColumnIndex(DownloadInfo.Column_TargetUrl)));
+        downloadInfo.setTotalLength(cursor.getLong(cursor.getColumnIndex(DownloadInfo.Column_TotalLength)));
+        cursor.close();
+
+        return downloadInfo;
+    }
+
+    public DownloadInfo query(String selection, String[] selectionArgs) {
+
+        Context context = NetworkLibEnv.getInstance().getContext();
+        if (context == null) {
+            return null;
+        }
+
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
+        Cursor cursor = context.getContentResolver().query(uri, null, selection, selectionArgs, null);
+        if (cursor == null) {
+            return null;
+        }
+
+        cursor.moveToFirst();
         DownloadInfo downloadInfo = new DownloadInfo();
         downloadInfo.setId(cursor.getInt(cursor.getColumnIndex(DownloadInfo.Column_Id)));
         downloadInfo.setCurrentLength(cursor.getLong(cursor.getColumnIndex(DownloadInfo.Column_CurrentLength)));
@@ -147,12 +146,4 @@ public class DownloadDbBaseOp {
         cursor.close();
         return downloadInfos;
     }
-
-    public void updateDownloadThread() {
-        Context context = NetworkLibEnv.getInstance().getContext();
-        Intent intent = new Intent(context, DownloadService.class);
-        context.startService(intent);
-    }
-
-
 }

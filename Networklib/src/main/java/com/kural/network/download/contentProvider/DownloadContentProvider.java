@@ -3,6 +3,8 @@ package com.kural.network.download.contentProvider;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,6 +13,7 @@ import android.net.Uri;
 import com.kural.network.NetworkLibEnv;
 import com.kural.network.download.constant.DownloadConstant;
 import com.kural.network.download.db.DownloadDbHelper;
+import com.kural.network.download.service.DownloadService;
 
 /**
  * download content provider
@@ -59,13 +62,12 @@ public class DownloadContentProvider extends ContentProvider {
 
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
         long id = sqLiteDatabase.insert(DownloadConstant.DOWNLOAD_TABLE_NAME, null, contentValues);
-        String path = uri.toString();
-        uri =  Uri.parse(path.substring(0, path.lastIndexOf("/")) + id);
-
+        uri =  Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI + "/" + id);
         ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
         if (contentResolver != null) {
             contentResolver.notifyChange(uri, null);
         }
+        updateDownloadService();
         return uri;
     }
 
@@ -73,11 +75,12 @@ public class DownloadContentProvider extends ContentProvider {
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
         int id = sqLiteDatabase.delete(DownloadConstant.DOWNLOAD_TABLE_NAME, selection, selectionArgs);
-
+        uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI + "/" + id);
         ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
         if (contentResolver != null) {
             contentResolver.notifyChange(uri, null);
         }
+        updateDownloadService();
         return id;
     }
 
@@ -85,11 +88,19 @@ public class DownloadContentProvider extends ContentProvider {
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
         SQLiteDatabase sqLiteDatabase = mDownloadDBHelper.getWritableDatabase();
         int id = sqLiteDatabase.update(DownloadConstant.DOWNLOAD_TABLE_NAME, contentValues, selection, selectionArgs);
-
+        uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI + "/" + id);
         ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
         if (contentResolver != null) {
             contentResolver.notifyChange(uri, null);
         }
+        updateDownloadService();
         return id;
+    }
+
+
+    private void updateDownloadService() {
+        Context context = NetworkLibEnv.getInstance().getContext();
+        Intent intent = new Intent(context, DownloadService.class);
+        context.startService(intent);
     }
 }

@@ -32,8 +32,8 @@ public class DownloadEventManager extends ContentObserver {
     }
 
     private void registerDownloadProvider() {
-        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
-        NetworkLibEnv.getInstance().getContext().getContentResolver().registerContentObserver(uri, false, this);
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI + "/#");
+        NetworkLibEnv.getInstance().getContext().getContentResolver().registerContentObserver(uri, true, this);
     }
 
     private void unregisterDownloadProvider() {
@@ -67,14 +67,17 @@ public class DownloadEventManager extends ContentObserver {
     @Override
     public void onChange(boolean selfChange, Uri uri) {
 
-        DownloadInfo downloadInfo = DownloadDbOpManager.queryDownloadInfo(uri);
+        if (uri == null) {
+            return;
+        }
 
+        DownloadInfo downloadInfo = DownloadDbOpManager.queryDownloadInfoByUri(uri);
         if (downloadInfo != null) {
             DownloadEvent event = new DownloadEvent();
             event.setTotalLength(downloadInfo.getTotalLength());
             event.setCurrentLength(downloadInfo.getCurrentLength());
             event.setDownloadState(downloadInfo.getDownloadState());
-            event.setUri(uri);
+            event.setUrl(downloadInfo.getDownloadUrl());
             notifyAllDwonloadEvent(event);
         }
     }

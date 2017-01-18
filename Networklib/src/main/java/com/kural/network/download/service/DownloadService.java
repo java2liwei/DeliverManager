@@ -43,9 +43,7 @@ public class DownloadService extends Service {
 
     private void startDownload() {
 
-        if (isNeedCheck()) {
-            return;
-        } else {
+        if (!isNeedCheck()) {
             changeCheckSatate(true);
         }
 

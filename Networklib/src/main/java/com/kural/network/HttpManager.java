@@ -6,10 +6,9 @@ import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
 import com.kural.network.download.db.DownloadDbOpManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -148,38 +147,47 @@ public class HttpManager {
             return;
         }
 
-        if (downloadInfo.getDownloadState() == DownloadConstant.STATE_PENDDING) {
-            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_DOWNLOADING);
-        }
-
         InputStream ins = response.body().byteStream();
-        FileOutputStream ous = null;
+        RandomAccessFile oSavedFile = null;
         long totalLength = response.body().contentLength();
         long currentLength = downloadInfo.getCurrentLength();
         int downloadState = DownloadConstant.STATE_DOWNLOADING;
         int len = -1;
         byte[] data = new byte[1024 * 4];
+        int code = response.code();
+        if (code != 200 && code != 206) {
+            return;
+        }
+
+        if (downloadInfo.getDownloadState() == DownloadConstant.STATE_PENDDING) {
+            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_DOWNLOADING);
+        }
+
+        if (downloadInfo.getTotalLength() == 0) {
+            DownloadDbOpManager.updateDownloadTotleLength(downloadInfo.getId(), totalLength);
+        }
+
         try {
-
-            ous = new FileOutputStream(new File(downloadInfo.getTargetUrl()));
-
-            while ((len = ins.read(data)) != -1 && downloadState == DownloadConstant.STATE_DOWNLOADING) {
-                ous.write(data, 0, len);
+            oSavedFile = new RandomAccessFile(downloadInfo.getTargetUrl(), "rwd");
+            if (oSavedFile.length() == currentLength) {
+                oSavedFile.seek(currentLength);
+            }
+            while ((len = ins.read(data, 0, 4 * 1024)) > 0 && downloadState == DownloadConstant.STATE_DOWNLOADING) {
+                oSavedFile.write(data, 0, len);
                 currentLength = currentLength + len;
-                DownloadDbOpManager.updateDownloadProgress(downloadInfo.getId(), totalLength, currentLength);
+                DownloadDbOpManager.updateDownloadProgress(downloadInfo.getId(), currentLength);
                 downloadState = DownloadDbOpManager.queryDownloadStateById(downloadInfo.getId());
             }
 
-            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_SUCCESS);
+            if (currentLength == downloadInfo.getTotalLength()) {
+                DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_SUCCESS);
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            DownloadDbOpManager.updataDownloadInfoState(downloadInfo.getId(), DownloadConstant.STATE_PASUE);
         } finally {
             try {
                 if (ins != null) {
                     ins.close();
-                }
-                if (ous != null) {
-                    ous.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -253,7 +261,8 @@ public class HttpManager {
         long currentLength = downloadInfo.getCurrentLength();
         Headers.Builder builder = new Headers.Builder();
         if (currentLength > 0) {
-            builder.add(com.kural.network.http.Header.RANGE, "bytes=" + currentLength + "-");
+            long downloadLengthoffset = currentLength;
+            builder.add(com.kural.network.http.Header.RANGE, "bytes=" + downloadLengthoffset + "-");
         }
 
         return builder.build();

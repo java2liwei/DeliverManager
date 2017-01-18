@@ -7,6 +7,8 @@ import android.net.Uri;
 import com.kural.network.NetworkLibEnv;
 import com.kural.network.download.bean.DownloadInfo;
 import com.kural.network.download.constant.DownloadConstant;
+import com.kural.network.download.observer.DownloadEventManager;
+import com.kural.network.download.observer.IDownloadEventObserver;
 
 /**
  * 下载管理类
@@ -49,39 +51,45 @@ public class DownloadManager {
         return contentResolver.insert(uri, contentValues);
     }
 
-    public void pauseDownload(DownloadInfo downloadInfo, Uri uri) {
+    public void pauseDownload(DownloadInfo downloadInfo) {
 
-        if (downloadInfo == null || uri == null) {
+        if (downloadInfo == null) {
             return;
         }
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PASUE);
 
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
-        contentResolver.update(uri, contentValues, null, null);
+        contentResolver.update(uri, contentValues, DownloadInfo.Column_Id + " = ?", new String[]{String.valueOf(downloadInfo.getId())});
     }
 
-    public void resumeDownload(DownloadInfo downloadInfo, Uri uri) {
-
-        if (downloadInfo == null || uri == null) {
-            return;
-        }
-
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PENDDING);
-        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
-        contentResolver.update(uri, contentValues, null, null);
-    }
-
-    public void stopDownload(DownloadInfo downloadInfo, Uri uri) {
+    public void resumeDownload(DownloadInfo downloadInfo) {
 
         if (downloadInfo == null) {
             return;
         }
 
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DownloadInfo.Column_DownloadState, DownloadConstant.STATE_PENDDING);
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
         ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
-        contentResolver.delete(uri, null, null);
+        contentResolver.update(uri, contentValues, DownloadInfo.Column_Id + " = ?", new String[]{String.valueOf(downloadInfo.getId())});
+    }
+
+    public void stopDownload(DownloadInfo downloadInfo) {
+
+        if (downloadInfo == null) {
+            return;
+        }
+        Uri uri = Uri.parse(DownloadConstant.DOWNLOAD_PROVIDER_URI);
+        ContentResolver contentResolver = NetworkLibEnv.getInstance().getContext().getContentResolver();
+        contentResolver.delete(uri, DownloadInfo.Column_Id + " = ?", new String[]{String.valueOf(downloadInfo.getId())});
+    }
+
+    public void addDownloadListenner (IDownloadEventObserver observer) {
+        DownloadEventManager.getInstance().registerDownloadEventObserver(observer);
     }
 
 }

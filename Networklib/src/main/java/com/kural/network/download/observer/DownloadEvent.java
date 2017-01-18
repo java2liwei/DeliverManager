@@ -1,13 +1,10 @@
 package com.kural.network.download.observer;
 
-import android.net.Uri;
-
 /**
  * download event
  */
 public class DownloadEvent {
 
-    private Uri mUri;
 
     private int mDownloadState;
 
@@ -15,13 +12,8 @@ public class DownloadEvent {
 
     private long mCurrentLength;
 
-    public Uri getUri() {
-        return mUri;
-    }
+    private String mUrl;
 
-    public void setUri(Uri mUri) {
-        this.mUri = mUri;
-    }
 
     public int getDownloadState() {
         return mDownloadState;
@@ -45,5 +37,13 @@ public class DownloadEvent {
 
     public void setCurrentLength(long mCurrentLength) {
         this.mCurrentLength = mCurrentLength;
+    }
+
+    public String getUrl() {
+        return mUrl;
+    }
+
+    public void setUrl(String mUrl) {
+        this.mUrl = mUrl;
     }
 }

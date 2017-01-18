@@ -1,13 +1,11 @@
 package com.kural.delivermanager.ui;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
 import com.kural.delivermanager.R;
-import com.kural.network.download.DownloadManager;
-import com.kural.network.download.bean.DownloadInfo;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -20,29 +18,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mDownloadBtn = (Button) findViewById(R.id.btn_download);
+        findViewById(R.id.btn_pause).setOnClickListener(this);
+        findViewById(R.id.btn_resume).setOnClickListener(this);
         mDownloadBtn.setOnClickListener(this);
     }
 
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_download:
-                startDownload(mUrl);
-                break;
-        }
-    }
 
-    private void startDownload (String url) {
-        DownloadInfo downloadInfo = new DownloadInfo(url);
-        DownloadManager.getInstance().startDownload(downloadInfo, true);
-    }
-
-    private void pauseDownload() {
 
     }
 
-    private void resumeDownload() {
-
-    }
 }
