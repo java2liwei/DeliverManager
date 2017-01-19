@@ -92,7 +92,6 @@ public class HttpManager {
         return null;
     }
 
-
     private void aysnGetHttpRequest(String url, Callback callback) {
         asynGetHttpRequest(url, null, callback);
     }

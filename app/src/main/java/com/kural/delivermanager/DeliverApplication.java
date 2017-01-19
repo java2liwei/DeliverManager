@@ -28,6 +28,7 @@ public class DeliverApplication extends Application{
     private void init() {
         //NetWork Lib init
         NetworkLibEnv.getInstance().init(mContext);
+
     }
 
 }
