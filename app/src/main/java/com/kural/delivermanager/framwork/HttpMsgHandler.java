@@ -9,7 +9,8 @@ import com.kural.delivermanager.framwork.observer.ResponseEventManager;
 import com.kural.network.HttpManager;
 
 import java.util.HashMap;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import okhttp3.Headers;
 
@@ -20,13 +21,13 @@ public class HttpMsgHandler {
 
     private volatile static HttpMsgHandler mInstance;
 
-    private PriorityBlockingQueue<BaseMsg> mMsgQuene;
+    private BlockingQueue<BaseMsg> mMsgQuene;
 
     private MsgConsumThread mMsgConsumThread;
 
     private boolean mIsQuite = false;
 
-    public HttpMsgHandler getInstance() {
+    public static HttpMsgHandler getInstance() {
         if (mInstance == null) {
             synchronized (HttpMsgHandler.class) {
                 if (mInstance == null) {
@@ -39,7 +40,7 @@ public class HttpMsgHandler {
 
 
     private HttpMsgHandler() {
-        mMsgQuene = new PriorityBlockingQueue<>();
+        mMsgQuene = new LinkedBlockingQueue<>();
         startConsumeThread();
     }
 
@@ -56,8 +57,10 @@ public class HttpMsgHandler {
             return;
         }
 
-        synchronized (this) {
+        try {
             mMsgQuene.put(baseMsg);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -87,9 +90,7 @@ public class HttpMsgHandler {
             BaseMsg baseMsg;
             while (true) {
                 try {
-                    synchronized (HttpMsgHandler.this) {
-                        baseMsg = mMsgQuene.take();
-                    }
+                    baseMsg = mMsgQuene.take();
                     consumeHttpMsg(baseMsg);
                 } catch (InterruptedException e) {
                     if (isQuite()) {

@@ -1,10 +1,10 @@
 package com.kural.delivermanager.framwork.msg;
 
 import android.text.TextUtils;
-import android.util.Base64;
 
-import com.kural.delivermanager.base.DeliverBean;
+import com.kural.delivermanager.base.DeliverOrder;
 import com.kural.delivermanager.framwork.constant.MsgConstant;
+import com.kural.delivermanager.utils.Base64Util;
 import com.kural.delivermanager.utils.Md5Util;
 
 import java.io.UnsupportedEncodingException;
@@ -12,11 +12,11 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 
 /**
- * deliver query msg
+ * query firm by logistic numb
  */
-public class DeliverQueryMsg extends BaseMsg {
+public class DeliverFirmMsg extends BaseMsg {
 
-    public DeliverQueryMsg(int viewId, int msgId, HashMap<String, String> params) {
+    public DeliverFirmMsg (int viewId, int msgId, HashMap<String, String> params) {
         mViewId = viewId;
         mMsgId = msgId;
         mParams = params;
@@ -28,16 +28,6 @@ public class DeliverQueryMsg extends BaseMsg {
         return "http://api.kdniao.cc/Ebusiness/EbusinessOrderHandle.aspx";
     }
 
-    @Override
-    public Object handleResponse(String responseStr) {
-
-        if (TextUtils.isEmpty(responseStr)) {
-            return null;
-        }
-
-        return DeliverBean.createFromJson(responseStr);
-    }
-
 
     @Override
     public HashMap<String, String> getParams() {
@@ -46,9 +36,8 @@ public class DeliverQueryMsg extends BaseMsg {
             return null;
         }
 
-        String shipperCode = mParams.get("shipperCode");
         String logisticCode = mParams.get("LogisticCode");
-        String requestData= "{'OrderCode':'','ShipperCode':'" + shipperCode + "','LogisticCode':'" + logisticCode + "'}";
+        String requestData= "{'LogisticCode':'" + logisticCode + "'}";
         HashMap<String, String> params = new HashMap<String, String>();
         try {
             params.put("RequestData", URLEncoder.encode(requestData, "UTF-8"));
@@ -64,24 +53,27 @@ public class DeliverQueryMsg extends BaseMsg {
         return params;
     }
 
+
     private String encrypt (String content, String keyValue, String charset) throws UnsupportedEncodingException {
         if (!TextUtils.isEmpty(keyValue)) {
             String md5Str = Md5Util.getStringMd5(content + keyValue);
             if (TextUtils.isEmpty(md5Str)) {
                 return "";
             }
-            return Base64.encodeToString(md5Str.getBytes(), Base64.DEFAULT);
+            return Base64Util.encode(md5Str.getBytes(charset));
         }
 
         String md5Str = Md5Util.getStringMd5(content);
         if (TextUtils.isEmpty(md5Str)) {
             return "";
         }
-        return Base64.encodeToString(md5Str.getBytes(charset), Base64.DEFAULT);
+        return Base64Util.encode(md5Str.getBytes(charset));
     }
 
     @Override
-    public int requestType() {
-        return MsgConstant.REQUEST_TYPE_POST;
+    public Object handleResponse(String string) {
+        return DeliverOrder.createFromJson(string);
     }
+
+
 }
